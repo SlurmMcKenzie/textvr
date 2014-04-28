@@ -1,0 +1,93 @@
+<html style="margin:0px; padding:0px">
+
+    <head>
+        <script src="webrift.js"></script>
+        <script src="three.min.js"></script>
+        <script src="OculusRiftEffect.js"></script>
+    </head>
+
+    <body style="margin:0px; padding: 0px">
+        <canvas id="renderCanvas" style="width:100%; height:100%;"></canvas>
+    </body>
+
+    <script>
+
+        var camera, scene, renderer,
+            geometry, material, light, sphere, velocity = new THREE.Vector3(0.020, 0.021, 0.022),
+            mesh, texture, t=0,
+            OReffect, webrift;
+
+        init();
+        animate();
+
+        function init() {
+
+			// local Websocket
+            webrift = new Webrift("ws://localhost:80");
+            // foV, resolution of rift, nearest rendering, farest rendering
+            camera = new THREE.PerspectiveCamera(75, 1280/800, 0.3, 10000.0);
+            
+            camera.position.set(0, 1.62, 6.0);
+            
+
+			// new scene
+            scene = new THREE.Scene();
+
+			// cube with side length
+            geometry = new THREE.CubeGeometry(20, 20 , 20);
+            geometry.computeTangents();
+            texture = new THREE.ImageUtils.loadTexture( 'grid.png' );
+            normal = new THREE.ImageUtils.loadTexture( 'normalmap.png' );
+            material = new THREE.MeshPhongMaterial({color: 0xffffff, side: THREE.DoubleSide, map: texture, normalMap: normal, shininess: 100, metal: false, specular: 0xffffff});
+            mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(0, 4, 0);
+            scene.add(mesh);
+
+            geometry = new THREE.CubeGeometry(1, 1, 1)
+            material = new THREE.MeshPhongMaterial({color: 0xFFFFFF, specular: 0x050505, shininess: 50 });
+            cubus = new THREE.Mesh(geometry, material);
+            cubus.position.set(0, 2, 0);
+            scene.add(cubus);
+
+            light = new THREE.PointLight(0x0000ff);
+            light.position.set(0, 4, 4);
+            scene.add(light)
+            			
+            var canvas = document.getElementById("renderCanvas");
+            renderer = new THREE.WebGLRenderer({canvas: canvas});
+            renderer.setSize(1280, 800);
+            renderer.setClearColor(0xffffff);
+
+            var HMD = {
+                hResolution: 1280,
+                vResolution: 800,
+                hScreenSize: 0.14976,
+                vScreenSize: 0.0936,
+                //changed ipd 
+                interpupillaryDistance: 0.055,
+                lensSeparationDistance: 0.055,
+                eyeToScreenDistance: 0.041,
+                distortionK : [1.0, 0.22, 0.24, 0.0],
+                chromaAbParameter: [ 0.996, -0.004, 1.014, 0.0]
+            };
+            OReffect = new THREE.OculusRiftEffect(renderer, {HMD: HMD, worldFactor: 1.0});
+            OReffect.setSize(1280, 800);
+
+            document.body.appendChild(renderer.domElement);
+
+        }
+
+        function animate() {
+
+            requestAnimationFrame(animate);
+            cubus.rotation.x += 0.01; 
+            cubus.rotation.y += 0.01;
+            camera.rotation.y += 0.5 * Math.PI / 180
+            OReffect.render(scene, camera);
+
+        }
+
+    </script>
+
+
+</html>
